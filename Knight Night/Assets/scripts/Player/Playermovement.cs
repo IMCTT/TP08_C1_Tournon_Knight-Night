@@ -2,7 +2,7 @@
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UI;
-
+using System.Collections;
 
 public class Playermovement : MonoBehaviour
 {
@@ -19,7 +19,7 @@ public class Playermovement : MonoBehaviour
     [SerializeField] private KeyCode keyLeft = KeyCode.A;
     [SerializeField] private KeyCode keyRight = KeyCode.D;
     [SerializeField] private KeyCode jump = KeyCode.W;
-    //[SerializeField] private Animator animator;
+    [SerializeField] private Animator animator;
     [SerializeField] FloorDetect floorDetect;
 
     private Rigidbody2D rb;
@@ -42,8 +42,15 @@ public class Playermovement : MonoBehaviour
     [SerializeField] private float attackRange = 0.5f; 
     [SerializeField] private int attackDamage = 1;
     [SerializeField] private float attackCooldown = 0.4f; 
+    
+    [Header("Damage Feedback")]
+    [SerializeField] private SpriteRenderer spriteRenderer;
+    [SerializeField] private float hitInvulnerabilityTime = 1f; //
+    [SerializeField] private float blinkInterval = 0.1f;
+    private bool isHurt = false;
+    
     private float attackTimer;
-   //public  SpriteRenderer sr;
+   
 
 
 
@@ -64,6 +71,7 @@ public class Playermovement : MonoBehaviour
     {
         attackTimer -= Time.deltaTime;
         Movevement();
+        UpdateAnimations();
         
         if (invincible)
         {
@@ -87,10 +95,6 @@ public class Playermovement : MonoBehaviour
             AudioSource.clip = SfxJump;
             AudioSource.Play();
 
-            
-
-
-
         }
        
 
@@ -101,24 +105,15 @@ public class Playermovement : MonoBehaviour
             Quaternion flip = Quaternion.Euler(0, 0, 0);
             transform.rotation = flip;
             
-            //animator.SetTrigger("walk");
-            
-
 
         }
         else if (Input.GetKeyUp(keyLeft))
-        {
-            
             rb.linearVelocity = Vector3.zero;
             
-        }
-        else
-        {
-            //animator.SetTrigger("Idle");
-        }
+        
+       
         if (Input.GetKey(keyRight))
         {
-            
             //animator.SetTrigger("walk");
             Quaternion flip = Quaternion.Euler(0, 180, 0);
             transform.rotation = flip;
@@ -126,55 +121,39 @@ public class Playermovement : MonoBehaviour
             //SpeedLimit();
         }
         else if (Input.GetKeyUp(keyRight))
-        {
-           
             rb.linearVelocity = Vector3.zero;
             
-        }
-        else
-        {
-            //animator.SetTrigger("Idle");
-        }
+        
+       
         if (Input.GetKeyDown(attack) && attackTimer <= 0)
         {
             Debug.Log("tried attack");
             Attack();
             //AudioSource.clip = SfxAttack;
             //AudioSource.Play();
-            //animator.SetTrigger("attack");
+            animator.SetTrigger("Attack");
         }
         
            
     }
     
-
-
-
-    private void OnTriggerEnter2D(Collider2D other) // cuando toca un enemigo, insertar danio
+    private void OnTriggerEnter2D(Collider2D other)
     {
         if (FloorDetect.CheckLayerInMask(enemyMask, other.gameObject.layer))
         {
-            if (invincible)
+            Debug.Log("damage received");
+            if (!invincible && !isHurt)
             {
-                
+                //playerLifebar.fillAmount -= 0.25f;
+                StartCoroutine(HurtFeedback());
             }
-            else 
-            {
-                playerLifebar.fillAmount -= 0.25f;
-
-                //animator.SetTrigger("hit");
-            }
-            
         }
-
     }
+    
+    
     private void Attack()
     {
         attackTimer = attackCooldown;
-
-        //AudioSource.clip = SfxAttack;
-        //AudioSource.Play();
-        //animator.SetTrigger("Attack");
 
         
         Collider2D[] hits = Physics2D.OverlapCircleAll(attackPoint.position, attackRange, enemyMask);
@@ -198,6 +177,31 @@ public class Playermovement : MonoBehaviour
         Gizmos.DrawWireSphere(attackPoint.position, attackRange);
     }
 
+    private void UpdateAnimations()
+    {
+        animator.SetFloat("Speed", Mathf.Abs(rb.linearVelocity.x)); 
+        animator.SetBool("IsGrounded", floorDetect.IsGrounded);
+    }
+    
+    
+    private IEnumerator HurtFeedback()
+    {
+        isHurt = true;
+        spriteRenderer.color = Color.red;
+        yield return new WaitForSeconds(0.1f);
+        spriteRenderer.color = Color.white; 
+
+        float timer = 0f;
+        while (timer < hitInvulnerabilityTime)
+        {
+            spriteRenderer.enabled = !spriteRenderer.enabled;
+            yield return new WaitForSeconds(blinkInterval);
+            timer += blinkInterval;
+        }
+
+        spriteRenderer.enabled = true;
+        isHurt = false;
+    }
 
 
 }
