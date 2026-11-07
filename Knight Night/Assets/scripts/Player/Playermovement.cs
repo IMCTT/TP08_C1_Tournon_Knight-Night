@@ -3,6 +3,7 @@ using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class Playermovement : MonoBehaviour
 {
@@ -21,6 +22,10 @@ public class Playermovement : MonoBehaviour
     [SerializeField] private KeyCode jump = KeyCode.W;
     [SerializeField] private Animator animator;
     [SerializeField] FloorDetect floorDetect;
+    
+    [Header("Health")]
+    [SerializeField] private int maxHealth = 4;
+    private int currentHealth;
 
     private Rigidbody2D rb;
 
@@ -62,7 +67,8 @@ public class Playermovement : MonoBehaviour
     {
 
         rb = GetComponent<Rigidbody2D>();
-        //sr = GetComponent<SpriteRenderer>();
+        currentHealth = maxHealth;
+        UpdateLifebar();
         invincibilityTimer = 0;
 
     }
@@ -141,12 +147,7 @@ public class Playermovement : MonoBehaviour
     {
         if (FloorDetect.CheckLayerInMask(enemyMask, other.gameObject.layer))
         {
-            Debug.Log("damage received");
-            if (!invincible && !isHurt)
-            {
-                //playerLifebar.fillAmount -= 0.25f;
-                StartCoroutine(HurtFeedback());
-            }
+            TakeDamage(1);
         }
     }
     
@@ -202,7 +203,52 @@ public class Playermovement : MonoBehaviour
         spriteRenderer.enabled = true;
         isHurt = false;
     }
+    
+    public void TakeDamage(int amount)
+    {
+        if (invincible || isHurt || currentHealth <= 0) return;
 
+        currentHealth -= amount;
+        UpdateLifebar();
+
+        if (currentHealth <= 0)
+        {
+            Die();
+        }
+        else
+        {
+            StartCoroutine(HurtFeedback());
+        }
+    }
+
+    public bool Heal(int amount)
+    {
+        if (currentHealth >= maxHealth || currentHealth <= 0) return false;
+
+        currentHealth = Mathf.Min(currentHealth + amount, maxHealth); 
+        UpdateLifebar();
+        return true;
+    }
+
+    private void UpdateLifebar()
+    {
+        playerLifebar.fillAmount = (float)currentHealth / maxHealth;
+    }
+
+    private void Die()
+    {
+        Debug.Log("player died");
+        rb.linearVelocity = Vector2.zero;
+        StartCoroutine(RestartAfterDelay());
+    }
+
+    private IEnumerator RestartAfterDelay()
+    {
+        spriteRenderer.enabled = false; // later: death animation / particles / Game Over screen
+        enabled = false;                // turns off this script (Update stops = no more input)
+        yield return new WaitForSeconds(2f);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
 
 }
 
