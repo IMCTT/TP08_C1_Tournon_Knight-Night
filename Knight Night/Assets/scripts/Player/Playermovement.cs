@@ -23,6 +23,8 @@ public class Playermovement : MonoBehaviour
     [SerializeField] private KeyCode keyLeft = KeyCode.A;
     [SerializeField] private KeyCode keyRight = KeyCode.D;
     [SerializeField] private KeyCode jump = KeyCode.W;
+    [SerializeField] private int maxJumps = 2; 
+    private int jumpsLeft;
     [SerializeField] private Animator animator;
     [SerializeField] FloorDetect floorDetect;
     
@@ -60,6 +62,7 @@ public class Playermovement : MonoBehaviour
     private int coins = 0;
 
     private Coroutine invulnerabilityCoroutine;
+    private Coroutine CloudCoroutine;
     
     private float attackTimer;
    
@@ -93,14 +96,20 @@ public class Playermovement : MonoBehaviour
     #region Movement
     private void Movevement()
     {
-        if (Input.GetKeyDown(jump) && floorDetect.IsGrounded)
+        
+        if (floorDetect.IsGrounded && rb.linearVelocity.y <= 0.01f)
         {
-            rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
-            Debug.Log("jump");
+            jumpsLeft = maxJumps;
+        }
+
+        if (Input.GetKeyDown(jump) && jumpsLeft > 0)
+        {
+            
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+            jumpsLeft--;
 
             AudioSource.clip = SfxJump;
             AudioSource.Play();
-
         }
        
 
@@ -281,7 +290,29 @@ public class Playermovement : MonoBehaviour
         yield return new WaitForSeconds(duration);
         invincible = false;
         spriteRenderer.color = Color.white;
+        
     }
+
+    public void ActivateCloud(float duration)
+    {
+        if (CloudCoroutine != null)
+        {
+            StopCoroutine(CloudCoroutine);
+        }
+        CloudCoroutine = StartCoroutine(CloudRoutine(duration));
+    }
+
+    private IEnumerator CloudRoutine(float duration)
+    {
+        maxJumps = 3;
+        jumpsLeft++; 
+
+        yield return new WaitForSeconds(duration);
+
+        maxJumps = 2;
+        jumpsLeft = Mathf.Min(jumpsLeft, maxJumps); 
+    }
+    
     #endregion
 }
 

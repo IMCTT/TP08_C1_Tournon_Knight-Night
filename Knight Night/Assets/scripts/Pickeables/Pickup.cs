@@ -6,7 +6,8 @@ public enum PickupType
     Heal, 
     Damage, 
     Invulnerability, 
-    Coin
+    Coin,
+    Cloud
 }
 
 public class Pickup : MonoBehaviour
@@ -36,6 +37,9 @@ public class Pickup : MonoBehaviour
                 break;
             case PickupType.Coin:
                 player.AddCoins(amount);
+                break;
+            case PickupType.Cloud:
+                player.ActivateCloud(duration);
                 break;
         }
 
