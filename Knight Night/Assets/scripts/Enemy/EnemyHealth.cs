@@ -4,7 +4,10 @@ using UnityEngine.UI;
 
 public class EnemyHealth : MonoBehaviour
 {
-    [SerializeField] private float maxHealth = 3.0f;
+    [SerializeField] private EnemyConfigSO config;
+    private int maxHealth;
+
+    public int enemyDamage => config.enemyDamage; 
 
     [Header("References")]
     [SerializeField] private Image healthBarFill;
@@ -26,6 +29,7 @@ public class EnemyHealth : MonoBehaviour
 
     void Awake()
     {
+        maxHealth = config.maxHealth;
         currentHealth = maxHealth;
         UpdateHealthBar();
     }

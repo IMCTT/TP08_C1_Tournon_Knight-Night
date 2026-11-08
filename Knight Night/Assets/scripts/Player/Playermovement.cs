@@ -10,28 +10,32 @@ using TMPro;
 public class Playermovement : MonoBehaviour
 {
     #region Fields
+    
+    [SerializeField] private PlayerConfigSO config;
+    
     [Header("Parameters")]
-    [SerializeField] float speed = 1.0f;
-    public float jumpForce = 10;
-    [SerializeField] Image playerLifebar;
-    public bool powerUp = false;
+    private float speed = 1.0f;
+    private float jumpForce = 10;
+    private int maxJumps = 2; 
+    private int jumpsLeft;
     public bool invincible = false;
-    private float invincibilityTimer;
+    private int maxHealth = 4;
+    private int currentHealth;
+    private bool isHurt = false;
+    private float hitInvulnerabilityTime = 1f; 
+    private float attackRange = 0.5f; 
+    private int attackDamage = 1;
+    private float attackCooldown = 0.4f; 
 
     [Header("Movement")]
 
     [SerializeField] private KeyCode keyLeft = KeyCode.A;
     [SerializeField] private KeyCode keyRight = KeyCode.D;
     [SerializeField] private KeyCode jump = KeyCode.W;
-    [SerializeField] private int maxJumps = 2; 
-    private int jumpsLeft;
+
     [SerializeField] private Animator animator;
     [SerializeField] FloorDetect floorDetect;
     
-    [Header("Health")]
-    [SerializeField] private int maxHealth = 4;
-    private int currentHealth;
-
     
     [Header("Objects")]
     [SerializeField] private LayerMask enemyMask;
@@ -46,15 +50,13 @@ public class Playermovement : MonoBehaviour
     [Header("Attack")]
     [SerializeField] private KeyCode attack = KeyCode.R;
     [SerializeField] private Transform attackPoint;    
-    [SerializeField] private float attackRange = 0.5f; 
-    [SerializeField] private int attackDamage = 1;
-    [SerializeField] private float attackCooldown = 0.4f; 
+   
     
     [Header("Damage Feedback")]
     [SerializeField] private SpriteRenderer spriteRenderer;
-    [SerializeField] private float hitInvulnerabilityTime = 1f; //
+    [SerializeField] Image playerLifebar;
+    
     [SerializeField] private float blinkInterval = 0.1f;
-    private bool isHurt = false;
     
     
     [Header("Coins")]
@@ -78,10 +80,19 @@ public class Playermovement : MonoBehaviour
     void Awake()
     {
 
+        speed = config.speed;
+        jumpForce = config.jumpForce;
+        maxJumps = config.maxJumps;
+        maxHealth = config.maxHealth;
+        hitInvulnerabilityTime = config.hitInvulnerabilityTime;
+        attackDamage = config.attackDamage;
+        attackRange = config.attackRange;
+        attackCooldown = config.attackCooldown;
+        
         rb = GetComponent<Rigidbody2D>();
         currentHealth = maxHealth;
         UpdateLifebar();
-        invincibilityTimer = 0;
+        
 
     }
 
@@ -257,7 +268,10 @@ public class Playermovement : MonoBehaviour
     {
         if (FloorDetect.CheckLayerInMask(enemyMask, other.gameObject.layer))
         {
-            TakeDamage(1);
+            
+            EnemyHealth enemy = other.GetComponentInParent<EnemyHealth>();
+            int damage = enemy.enemyDamage;
+            TakeDamage(damage);
         }
     }
     #endregion
@@ -309,7 +323,7 @@ public class Playermovement : MonoBehaviour
 
         yield return new WaitForSeconds(duration);
 
-        maxJumps = 2;
+        maxJumps = config.maxJumps;
         jumpsLeft = Mathf.Min(jumpsLeft, maxJumps); 
     }
     

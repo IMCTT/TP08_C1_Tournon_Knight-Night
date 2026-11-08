@@ -12,10 +12,7 @@ public enum PickupType
 
 public class Pickup : MonoBehaviour
 {
-    [SerializeField] private PickupType type;
-    [SerializeField] private int amount = 1;   
-    [SerializeField] private float duration = 5f;
-
+    [SerializeField] private PickupConfigSO config;
     private void OnTriggerEnter2D(Collider2D other)
     {
         
@@ -24,22 +21,22 @@ public class Pickup : MonoBehaviour
 
         bool used = true;
 
-        switch (type)
+        switch (config.type)
         {
             case PickupType.Heal:
-                used = player.Heal(amount); 
+                used = player.Heal(config.amount); 
                 break;
             case PickupType.Damage:
-                player.AddDamage(amount);
+                player.AddDamage(config.amount);
                 break;
             case PickupType.Invulnerability:
-                player.ActivateInvulnerability(duration);
+                player.ActivateInvulnerability(config.duration);
                 break;
             case PickupType.Coin:
-                player.AddCoins(amount);
+                player.AddCoins(config.amount);
                 break;
             case PickupType.Cloud:
-                player.ActivateCloud(duration);
+                player.ActivateCloud(config.duration);
                 break;
         }
 
