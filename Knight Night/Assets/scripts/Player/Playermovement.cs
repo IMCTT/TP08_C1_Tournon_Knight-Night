@@ -3,10 +3,13 @@ using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Specialized;
 using UnityEngine.SceneManagement;
+using TMPro;
 
 public class Playermovement : MonoBehaviour
 {
+    #region Fields
     [Header("Parameters")]
     [SerializeField] float speed = 1.0f;
     public float jumpForce = 10;
@@ -27,10 +30,7 @@ public class Playermovement : MonoBehaviour
     [SerializeField] private int maxHealth = 4;
     private int currentHealth;
 
-    private Rigidbody2D rb;
-
-    public bool flip = false;
-
+    
     [Header("Objects")]
     [SerializeField] private LayerMask enemyMask;
     [SerializeField] private LayerMask playerMask;
@@ -54,15 +54,24 @@ public class Playermovement : MonoBehaviour
     [SerializeField] private float blinkInterval = 0.1f;
     private bool isHurt = false;
     
+    
+    [Header("Coins")]
+    [SerializeField] private TMP_Text coinsText;
+    private int coins = 0;
+
+    private Coroutine invulnerabilityCoroutine;
+    
     private float attackTimer;
    
 
+    private Rigidbody2D rb;
+
+    public bool flip = false;
 
 
     private GameObject shot;
-    
-
-
+    #endregion
+    #region Unity Methods
     void Awake()
     {
 
@@ -79,18 +88,9 @@ public class Playermovement : MonoBehaviour
         Movevement();
         UpdateAnimations();
         
-        if (invincible)
-        {
-            invincibilityTimer += Time.deltaTime;
-        }
-        if (invincibilityTimer > 10)
-        {
-            invincible = false;
-            invincibilityTimer = 0;
-        }
     }
-
-
+    #endregion
+    #region Movement
     private void Movevement()
     {
         if (Input.GetKeyDown(jump) && floorDetect.IsGrounded)
@@ -143,15 +143,14 @@ public class Playermovement : MonoBehaviour
            
     }
     
-    private void OnTriggerEnter2D(Collider2D other)
+  
+    private void UpdateAnimations()
     {
-        if (FloorDetect.CheckLayerInMask(enemyMask, other.gameObject.layer))
-        {
-            TakeDamage(1);
-        }
+        animator.SetFloat("Speed", Mathf.Abs(rb.linearVelocity.x)); 
+        animator.SetBool("IsGrounded", floorDetect.IsGrounded);
     }
-    
-    
+    #endregion
+    #region Attack
     private void Attack()
     {
         attackTimer = attackCooldown;
@@ -170,40 +169,15 @@ public class Playermovement : MonoBehaviour
         }
     }
 
-    // cambiar por animacion
+    
     private void OnDrawGizmosSelected()
     {
         if (attackPoint == null) return;
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(attackPoint.position, attackRange);
     }
-
-    private void UpdateAnimations()
-    {
-        animator.SetFloat("Speed", Mathf.Abs(rb.linearVelocity.x)); 
-        animator.SetBool("IsGrounded", floorDetect.IsGrounded);
-    }
-    
-    
-    private IEnumerator HurtFeedback()
-    {
-        isHurt = true;
-        spriteRenderer.color = Color.red;
-        yield return new WaitForSeconds(0.1f);
-        spriteRenderer.color = Color.white; 
-
-        float timer = 0f;
-        while (timer < hitInvulnerabilityTime)
-        {
-            spriteRenderer.enabled = !spriteRenderer.enabled;
-            yield return new WaitForSeconds(blinkInterval);
-            timer += blinkInterval;
-        }
-
-        spriteRenderer.enabled = true;
-        isHurt = false;
-    }
-    
+    #endregion 
+    #region Health
     public void TakeDamage(int amount)
     {
         if (invincible || isHurt || currentHealth <= 0) return;
@@ -241,6 +215,27 @@ public class Playermovement : MonoBehaviour
         rb.linearVelocity = Vector2.zero;
         StartCoroutine(RestartAfterDelay());
     }
+    
+    private IEnumerator HurtFeedback()
+    {
+        isHurt = true;
+        spriteRenderer.color = Color.red;
+        yield return new WaitForSeconds(0.1f);
+        spriteRenderer.color = Color.white; 
+
+        float timer = 0f;
+        while (timer < hitInvulnerabilityTime)
+        {
+            spriteRenderer.enabled = !spriteRenderer.enabled;
+            yield return new WaitForSeconds(blinkInterval);
+            timer += blinkInterval;
+        }
+
+        spriteRenderer.enabled = true;
+        isHurt = false;
+    }
+    
+   
 
     private IEnumerator RestartAfterDelay()
     {
@@ -249,6 +244,44 @@ public class Playermovement : MonoBehaviour
         yield return new WaitForSeconds(2f);
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (FloorDetect.CheckLayerInMask(enemyMask, other.gameObject.layer))
+        {
+            TakeDamage(1);
+        }
+    }
+    #endregion
+    #region Pickups
+    public void AddDamage(int amount)
+    {
+        attackDamage += amount;
+    }
 
+    public void AddCoins(int amount)
+    {
+        coins += amount;
+        coinsText.text = "Coins: " + coins;
+    }
+
+    public void ActivateInvulnerability(float duration)
+    {
+        
+        if (invulnerabilityCoroutine != null)
+        {
+            StopCoroutine(invulnerabilityCoroutine);
+        }
+        invulnerabilityCoroutine = StartCoroutine(InvulnerabilityRoutine(duration));
+    }
+
+    private IEnumerator InvulnerabilityRoutine(float duration)
+    {
+        invincible = true;
+        spriteRenderer.color = Color.yellow; 
+        yield return new WaitForSeconds(duration);
+        invincible = false;
+        spriteRenderer.color = Color.white;
+    }
+    #endregion
 }
 
