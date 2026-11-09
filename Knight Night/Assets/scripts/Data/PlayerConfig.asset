@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3971276734312b04996fb503657e39d3, type: 3}
   m_Name: PlayerConfig
   m_EditorClassIdentifier: Assembly-CSharp::PlayerConfigSO
-  speed: 50
+  speed: 5
   jumpForce: 10
   maxJumps: 2
   maxHealth: 10

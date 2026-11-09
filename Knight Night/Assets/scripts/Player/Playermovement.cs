@@ -66,6 +66,7 @@ public class Playermovement : MonoBehaviour
     private Coroutine invulnerabilityCoroutine;
     private Coroutine CloudCoroutine;
     
+    private float horizontalInput;
     private float attackTimer;
    
 
@@ -103,6 +104,11 @@ public class Playermovement : MonoBehaviour
         UpdateAnimations();
         
     }
+    
+    void FixedUpdate()
+    {
+        rb.linearVelocity = new Vector2(horizontalInput * speed, rb.linearVelocity.y);
+    }
     #endregion
     #region Movement
     private void Movevement()
@@ -124,32 +130,19 @@ public class Playermovement : MonoBehaviour
         }
        
 
+        
+        horizontalInput = 0f;
+
         if (Input.GetKey(keyLeft))
         {
-
-            rb.AddForce(Vector3.left * speed * Time.deltaTime, ForceMode2D.Impulse);
-            Quaternion flip = Quaternion.Euler(0, 0, 0);
-            transform.rotation = flip;
-            
-
+            horizontalInput = -1f;
+            transform.rotation = Quaternion.Euler(0, 0, 0);
         }
-        else if (Input.GetKeyUp(keyLeft))
-            rb.linearVelocity = Vector3.zero;
-            
-        
-       
         if (Input.GetKey(keyRight))
         {
-            //animator.SetTrigger("walk");
-            Quaternion flip = Quaternion.Euler(0, 180, 0);
-            transform.rotation = flip;
-            rb.AddForce(Vector3.right * speed * Time.deltaTime, ForceMode2D.Impulse);
-            //SpeedLimit();
+            horizontalInput = 1f;
+            transform.rotation = Quaternion.Euler(0, 180, 0);
         }
-        else if (Input.GetKeyUp(keyRight))
-            rb.linearVelocity = Vector3.zero;
-            
-        
        
         if (Input.GetKeyDown(attack) && attackTimer <= 0)
         {

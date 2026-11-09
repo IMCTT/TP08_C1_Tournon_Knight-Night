@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0de5ae4ce0410a448ad1ed3a9b45e251, type: 3}
   m_Name: PickupInvConfig
   m_EditorClassIdentifier: Assembly-CSharp::PickupConfigSO
-  type: 3
+  type: 2
   amount: 1
   duration: 5

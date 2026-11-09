@@ -4,7 +4,7 @@ using UnityEngine;
 public class PlayerConfigSO : ScriptableObject
 {
     [Header("Movement")]
-    public float speed = 1f;
+    public float speed = 5f;
     public float jumpForce = 10f;
     public int maxJumps = 2;
 
