@@ -1,10 +1,7 @@
 
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
-using System.Collections.Specialized;
-using UnityEngine.SceneManagement;
 using TMPro;
 
 public class Playermovement : MonoBehaviour
