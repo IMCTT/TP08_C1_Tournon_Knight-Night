@@ -26,6 +26,7 @@ public class Playermovement : MonoBehaviour
     private float attackRange = 0.5f; 
     private int attackDamage = 1;
     private float attackCooldown = 0.4f; 
+    
 
     [Header("Movement")]
 
@@ -46,6 +47,12 @@ public class Playermovement : MonoBehaviour
     [SerializeField] AudioSource AudioSource;
     [SerializeField] AudioClip SfxJump;
     [SerializeField] AudioClip SfxAttack;
+    [SerializeField] AudioClip SfxHurt;
+    [SerializeField] AudioClip SfxDeath;
+    [SerializeField] AudioClip SfxHeal;
+    [SerializeField] AudioClip SfxCoin;
+    [SerializeField] AudioClip SfxPowerUp;
+    [SerializeField] AudioClip SfxKey;
 
     [Header("Attack")]
     [SerializeField] private KeyCode attack = KeyCode.R;
@@ -57,11 +64,18 @@ public class Playermovement : MonoBehaviour
     [SerializeField] Image playerLifebar;
     
     [SerializeField] private float blinkInterval = 0.1f;
+    [SerializeField] private EndScreen endScreen;
     
     
     [Header("Coins")]
     [SerializeField] private TMP_Text coinsText;
     private int coins = 0;
+    private int score = 0;
+    
+    [Header("Key")]
+    [SerializeField] private GameObject key; 
+    
+    
 
     private Coroutine invulnerabilityCoroutine;
     private Coroutine CloudCoroutine;
@@ -125,8 +139,7 @@ public class Playermovement : MonoBehaviour
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
             jumpsLeft--;
 
-            AudioSource.clip = SfxJump;
-            AudioSource.Play();
+            PlaySfx(SfxJump);
         }
        
 
@@ -148,8 +161,7 @@ public class Playermovement : MonoBehaviour
         {
             Debug.Log("tried attack");
             Attack();
-            //AudioSource.clip = SfxAttack;
-            //AudioSource.Play();
+            
             animator.SetTrigger("Attack");
         }
         
@@ -170,7 +182,7 @@ public class Playermovement : MonoBehaviour
 
         
         Collider2D[] hits = Physics2D.OverlapCircleAll(attackPoint.position, attackRange, enemyMask);
-
+        PlaySfx(SfxAttack);
         foreach (Collider2D hit in hits)
         {
             EnemyHealth enemy = hit.GetComponent<EnemyHealth>();
@@ -197,10 +209,14 @@ public class Playermovement : MonoBehaviour
 
         currentHealth -= amount;
         UpdateLifebar();
+        PlaySfx(SfxHurt);
 
         if (currentHealth <= 0)
         {
+            
             Die();
+            
+            
         }
         else
         {
@@ -211,9 +227,11 @@ public class Playermovement : MonoBehaviour
     public bool Heal(int amount)
     {
         if (currentHealth >= maxHealth || currentHealth <= 0) return false;
+        
 
         currentHealth = Mathf.Min(currentHealth + amount, maxHealth); 
         UpdateLifebar();
+        PlaySfx(SfxHeal);
         return true;
     }
 
@@ -225,6 +243,7 @@ public class Playermovement : MonoBehaviour
     private void Die()
     {
         Debug.Log("player died");
+        PlaySfx(SfxDeath);
         rb.linearVelocity = Vector2.zero;
         StartCoroutine(RestartAfterDelay());
     }
@@ -252,11 +271,18 @@ public class Playermovement : MonoBehaviour
 
     private IEnumerator RestartAfterDelay()
     {
-        spriteRenderer.enabled = false; // later: death animation / particles / Game Over screen
-        enabled = false;                // turns off this script (Update stops = no more input)
-        yield return new WaitForSeconds(2f);
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        spriteRenderer.enabled = false; 
+        enabled = false;
+        yield return new WaitForSeconds(1f);
+        endScreen.ShowGameOver(score);
     }
+    public void Win()
+    {
+        rb.linearVelocity = Vector2.zero;
+        enabled = false; 
+        endScreen.ShowVictory(score);
+    }
+    
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (FloorDetect.CheckLayerInMask(enemyMask, other.gameObject.layer))
@@ -272,12 +298,16 @@ public class Playermovement : MonoBehaviour
     public void AddDamage(int amount)
     {
         attackDamage += amount;
+        PlaySfx(SfxPowerUp);
     }
 
+    
     public void AddCoins(int amount)
     {
-        coins += amount;
-        coinsText.text = "Coins: " + coins;
+        SaveData.Coins += amount;  
+        score += amount * 10;       
+        coinsText.text = "Coins: " + SaveData.Coins;
+        PlaySfx(SfxCoin);
     }
 
     public void ActivateInvulnerability(float duration)
@@ -286,6 +316,7 @@ public class Playermovement : MonoBehaviour
         if (invulnerabilityCoroutine != null)
         {
             StopCoroutine(invulnerabilityCoroutine);
+            PlaySfx(SfxPowerUp);
         }
         invulnerabilityCoroutine = StartCoroutine(InvulnerabilityRoutine(duration));
     }
@@ -304,6 +335,7 @@ public class Playermovement : MonoBehaviour
     {
         if (CloudCoroutine != null)
         {
+            PlaySfx(SfxPowerUp);
             StopCoroutine(CloudCoroutine);
         }
         CloudCoroutine = StartCoroutine(CloudRoutine(duration));
@@ -320,6 +352,19 @@ public class Playermovement : MonoBehaviour
         jumpsLeft = Mathf.Min(jumpsLeft, maxJumps); 
     }
     
+    public bool HasKey { get; private set; }
+
+    public void AddKey()
+    {
+        HasKey = true;
+        PlaySfx(SfxKey);
+        key.SetActive(true);
+    }
+    
+    private void PlaySfx(AudioClip clip)
+    {
+        if (clip != null) AudioSource.PlayOneShot(clip);
+    }
     #endregion
 }
 

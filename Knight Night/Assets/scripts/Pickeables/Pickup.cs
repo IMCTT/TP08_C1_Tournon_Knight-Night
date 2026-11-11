@@ -7,7 +7,8 @@ public enum PickupType
     Damage, 
     Invulnerability, 
     Coin,
-    Cloud
+    Cloud,
+    Key
 }
 
 public class Pickup : MonoBehaviour
@@ -37,6 +38,9 @@ public class Pickup : MonoBehaviour
                 break;
             case PickupType.Cloud:
                 player.ActivateCloud(config.duration);
+                break;
+            case PickupType.Key:
+                player.AddKey();
                 break;
         }
 
