@@ -7,6 +7,7 @@ public enum PickupType
     Damage, 
     Invulnerability, 
     Coin,
+    // Suggestion: Cloud no describe el efecto del pickup (triple salto). Un nombre como TripleJump hace el switch más legible.
     Cloud,
     Key
 }

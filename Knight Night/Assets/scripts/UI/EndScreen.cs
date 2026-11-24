@@ -56,6 +56,7 @@ public class EndScreen : MonoBehaviour
     public void GoToMainMenu()
     {
         Time.timeScale = 1f;
+        // Warning: "Main Menu" es un string mágico, si renombrás la escena se rompe sin error de compilación. Usá una const o un campo serializado.
         SceneManager.LoadScene("Main Menu");
     }
 }

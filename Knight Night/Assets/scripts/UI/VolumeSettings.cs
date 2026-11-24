@@ -13,6 +13,7 @@ public class VolumeSettings : MonoBehaviour
     
     void Start()
     {
+        // Suggestion: Los nombres de parámetro del mixer se usan también como clave de PlayerPrefs. Declaralos como const para no repetir strings.
         SetupSlider(masterSlider, "MasterVolume");
         SetupSlider(musicSlider, "MusicVolume");
         SetupSlider(fxSlider, "FXVolume");

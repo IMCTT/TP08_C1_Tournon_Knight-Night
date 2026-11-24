@@ -13,6 +13,7 @@ public static class SaveData
         }
         set
         {
+            // Suggestion: PlayerPrefs.Save() en cada moneda escribe a disco cada vez (hay 29 monedas en Gameplay). Alcanza con guardar al terminar la partida.
             PlayerPrefs.SetInt(CoinsKey, value); PlayerPrefs.Save();
         }
     }

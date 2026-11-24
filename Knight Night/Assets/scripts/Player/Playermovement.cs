@@ -4,17 +4,22 @@ using UnityEngine.UI;
 using System.Collections;
 using TMPro;
 
+// Suggestion: El nombre de la clase no respeta PascalCase (PlayerMovement) y la clase resuelve movimiento, vida, ataque, pickups y score.
+// Conviene separarla en componentes (PlayerHealth, PlayerAttack, PlayerPickups) para que cada uno tenga una sola responsabilidad.
 public class Playermovement : MonoBehaviour
 {
     #region Fields
     
     [SerializeField] private PlayerConfigSO config;
     
+    // Suggestion: Este [Header] queda sobre campos privados no serializados, no se ve en el inspector, y los valores por defecto se pisan en Awake con el SO.
+    // Sacá los valores por defecto para que quede claro que la fuente de verdad es PlayerConfigSO.
     [Header("Parameters")]
     private float speed = 1.0f;
     private float jumpForce = 10;
     private int maxJumps = 2; 
     private int jumpsLeft;
+    // Warning: invincible es public y cualquier clase puede mutarlo. Pasalo a private y exponé una property de solo lectura si otra clase lo necesita.
     public bool invincible = false;
     private int maxHealth = 4;
     private int currentHealth;
@@ -41,6 +46,8 @@ public class Playermovement : MonoBehaviour
 
 
     [Header("Audio")]
+    // Suggestion: Estos campos privados están en PascalCase (AudioSource, SfxJump, ...) y sin private explícito, distinto del resto del script (speed, animator).
+    // Usá camelCase: [SerializeField] private AudioSource audioSource; [SerializeField] private AudioClip sfxJump;
     [SerializeField] AudioSource AudioSource;
     [SerializeField] AudioClip SfxJump;
     [SerializeField] AudioClip SfxAttack;
@@ -83,6 +90,7 @@ public class Playermovement : MonoBehaviour
 
     private Rigidbody2D rb;
 
+    // Suggestion: flip y shot (unas líneas más abajo) no se usan en ningún lado. Es código muerto, borralo.
     public bool flip = false;
 
 
@@ -122,6 +130,7 @@ public class Playermovement : MonoBehaviour
     }
     #endregion
     #region Movement
+    // Suggestion: Typo en el nombre (Movevement). Además del movimiento resuelve salto y ataque, un nombre como HandleInput describe mejor lo que hace.
     private void Movevement()
     {
         
@@ -168,6 +177,8 @@ public class Playermovement : MonoBehaviour
   
     private void UpdateAnimations()
     {
+        // Warning: Strings mágicos "Speed", "IsGrounded" (y "Attack" en Movevement) pasados al Animator todos los frames.
+        // Declaralos como private static readonly int SpeedHash = Animator.StringToHash("Speed"); y usá el hash.
         animator.SetFloat("Speed", Mathf.Abs(rb.linearVelocity.x)); 
         animator.SetBool("IsGrounded", floorDetect.IsGrounded);
     }
@@ -182,6 +193,8 @@ public class Playermovement : MonoBehaviour
         PlaySfx(SfxAttack);
         foreach (Collider2D hit in hits)
         {
+            // Bug: Acá usás hit.GetComponent, pero en OnTriggerEnter2D usás GetComponentInParent. El prefab Lancer tiene el hijo DamageColl en la capa Enemy:
+            // si el círculo de ataque toca solo ese hijo, GetComponent devuelve null y el golpe no hace daño. Usá hit.GetComponentInParent<EnemyHealth>().
             EnemyHealth enemy = hit.GetComponent<EnemyHealth>();
             if (enemy != null)
             {
@@ -280,12 +293,15 @@ public class Playermovement : MonoBehaviour
         endScreen.ShowVictory(score);
     }
     
+    // Bug: OnTriggerEnter2D se ejecuta solo al entrar. Si el jugador sigue dentro del trigger del enemigo cuando termina HurtFeedback (isHurt = false),
+    // no vuelve a recibir daño hasta salir y volver a entrar. Usá OnTriggerStay2D (el chequeo de isHurt ya evita el daño repetido).
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (FloorDetect.CheckLayerInMask(enemyMask, other.gameObject.layer))
         {
             
             EnemyHealth enemy = other.GetComponentInParent<EnemyHealth>();
+            // Warning: enemy puede ser null si algo en la capa Enemy no tiene EnemyHealth en su jerarquía, y esta línea tira NullReferenceException. Agregá if (enemy == null) return;
             int damage = enemy.enemyDamage;
             TakeDamage(damage);
         }
@@ -302,7 +318,9 @@ public class Playermovement : MonoBehaviour
     public void AddCoins(int amount)
     {
         SaveData.Coins += amount;  
+        // Suggestion: El 10 es un número mágico (puntos por moneda). Llevalo a un campo del SO.
         score += amount * 10;       
+        // Suggestion: coinsText solo se actualiza al juntar una moneda, al arrancar la escena muestra el texto por defecto del TMP y no el total guardado. Inicializalo en Awake.
         coinsText.text = "Coins: " + SaveData.Coins;
         PlaySfx(SfxCoin);
     }
@@ -310,6 +328,8 @@ public class Playermovement : MonoBehaviour
     public void ActivateInvulnerability(float duration)
     {
         
+        // Error: SfxPowerUp solo suena si invulnerabilityCoroutine != null, es decir desde el segundo pickup en adelante (la referencia nunca vuelve a null).
+        // El primer pickup de invulnerabilidad no tiene sonido. Mové PlaySfx(SfxPowerUp) fuera del if.
         if (invulnerabilityCoroutine != null)
         {
             StopCoroutine(invulnerabilityCoroutine);
@@ -330,6 +350,7 @@ public class Playermovement : MonoBehaviour
 
     public void ActivateCloud(float duration)
     {
+        // Error: Mismo problema que en ActivateInvulnerability: el primer pickup de triple salto no suena porque PlaySfx está dentro del if. Sacalo del if.
         if (CloudCoroutine != null)
         {
             PlaySfx(SfxPowerUp);
@@ -340,6 +361,7 @@ public class Playermovement : MonoBehaviour
 
     private IEnumerator CloudRoutine(float duration)
     {
+        // Suggestion: El 3 está hardcodeado. Leelo del PickupConfigSO (por ejemplo config.amount) o de PlayerConfigSO para que sea configurable.
         maxJumps = 3;
         jumpsLeft++; 
 

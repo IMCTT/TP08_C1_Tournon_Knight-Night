@@ -8,6 +8,7 @@ public class MainMenu : MonoBehaviour
 
     public void Play()
     {
+        // Warning: "Gameplay" es un string mágico, si renombrás la escena se rompe sin error de compilación. Usá una const o un campo serializado.
         SceneManager.LoadScene("Gameplay");
     }
 

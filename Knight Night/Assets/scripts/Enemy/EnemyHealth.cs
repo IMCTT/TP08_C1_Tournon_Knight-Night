@@ -7,6 +7,7 @@ public class EnemyHealth : MonoBehaviour
     [SerializeField] private EnemyConfigSO config;
     private int maxHealth;
 
+    // Suggestion: Property pública en camelCase. Por convención de C# debería ser EnemyDamage.
     public int enemyDamage => config.enemyDamage; 
 
     [Header("References")]
@@ -19,6 +20,7 @@ public class EnemyHealth : MonoBehaviour
     [SerializeField] private GameObject deathParticlesPrefab;
     [SerializeField] private AudioClip sfxHit;
     [SerializeField] private AudioClip sfxDeath;
+    // Suggestion: shrinkDuration no se usa en ningún método. Es código muerto, borralo o implementá el efecto.
     [SerializeField] private float shrinkDuration = 0.3f;
     [SerializeField] private Animator enemyAnimator;
     [SerializeField] private AnimationClip deathClip;
@@ -89,7 +91,10 @@ public class EnemyHealth : MonoBehaviour
 
         
         
+        // Warning: "Die" es un string mágico. Usá private static readonly int DieHash = Animator.StringToHash("Die");
         enemyAnimator.SetTrigger("Die");
+        // Warning: deathClip.length (y sfxDeath.length más abajo) no tienen null check, mientras que PlaySound sí valida el clip.
+        // Si falta alguno en el inspector, NullReferenceException y el enemigo nunca se destruye. Validá antes de usarlos.
         yield return new WaitForSeconds(deathClip.length);
 
         spriteRenderer.enabled = false;

@@ -19,6 +19,8 @@ public class Goal : MonoBehaviour
         }
         else
         {
+            // Bug: Cada entrada al trigger arranca una corrutina nueva. Si el jugador entra dos veces en menos de 2 segundos, la primera apaga el mensaje
+            // mientras la segunda sigue corriendo. Guardá la Coroutine en un campo y frená la anterior antes de arrancar otra. El 2f también conviene serializarlo.
             StartCoroutine(ShowNeedKey());
         }
     }

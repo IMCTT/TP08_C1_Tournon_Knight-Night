@@ -4,6 +4,8 @@ using UnityEngine;
 public class PlayerConfigSO : ScriptableObject
 {
     [Header("Movement")]
+    // Suggestion: Los campos public del SO se pueden mutar en runtime desde cualquier clase y el cambio persiste en el .asset en el editor.
+    // Usá [SerializeField] private y properties de solo lectura.
     public float speed = 5f;
     public float jumpForce = 10f;
     public int maxJumps = 2;
